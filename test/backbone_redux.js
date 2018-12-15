@@ -81,6 +81,14 @@ var getUser = function(state) {
     return state.user
 }
 
+var getFirstItem = function(state) {
+    return state.items[0]
+}
+
+var getSecondItem = function(state) {
+    return state.items[1]
+}
+
 module.exports = function(t) {
     t.test('connected view creation', function(t) {
         t.test('initialize is called', function(t) {
@@ -132,6 +140,90 @@ module.exports = function(t) {
                     firstArg(view.template),
                     newUser,
                     'template method should receive new view props'
+                )
+                sinon.restore()
+                t.end()
+            })
+
+            t.test('increasing number of item pieces', function(t) {
+                var store = storeMock()
+                var connect = backboneRedux(store).connect
+                var ConnectedItemView = connect(getFirstItem)(ViewExample)
+                var view = new ConnectedItemView()
+                view.dispatch({
+                    type: 'INCREASE_PIECES',
+                    index: 0
+                })
+                t.deepEquals(
+                    view.template.calledOnce,
+                    true,
+                    'render should be called once'
+                )
+                t.deepEquals(
+                    firstArg(view.template),
+                    {
+                        name: 'orange',
+                        pieces: 3
+                    },
+                    'method should receive new view props'
+                )
+                sinon.restore()
+                t.end()
+            })
+        })
+
+        t.test('dispatch action that DOES NOT change the local props', function(t) {
+            t.test('changing the number of item pieces in a user view', function() {
+                var store = storeMock()
+                var connect = backboneRedux(store).connect
+                var ConnectedUserView = connect(getUser)(ViewExample)
+                var view = new ConnectedUserView()
+                view.dispatch({
+                    type: 'INCREASE_PIECES',
+                    index: 1
+                })
+                t.deepEquals(
+                    view.template.called,
+                    false,
+                    'render should not be called once'
+                )
+                t.deepEquals(
+                    view.props,
+                    {
+                        name: 'John',
+                        lastName: 'Doe'
+                    },
+                    'props remains not changed'
+                )
+                sinon.restore()
+                t.end()
+            })
+
+            t.test('changing the user in a item view', function(t) {
+                var store = storeMock()
+                var connect = backboneRedux(store).connect
+                var ConnectedItemView = connect(getSecondItem)(ViewExample)
+                var view = new ConnectedItemView()
+                var newUser = {
+                    name: 'Jane',
+                    lastName: 'Doe'
+                }
+                view.dispatch({
+                    type: 'CHANGE_USER',
+                    user: newUser
+                })
+                t.deepEquals(
+                    view.template.called,
+                    false,
+                    'render should not be called'
+                )
+                t.deepEquals(
+                    view.props,
+                    {
+                        name: 'banana',
+                        pieces: 5
+                    },
+                    'props remains not changed'
                 )
                 sinon.restore()
                 t.end()
